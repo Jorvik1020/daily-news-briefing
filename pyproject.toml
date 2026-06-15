@@ -1,0 +1,18 @@
+[project]
+name = "daily-news-briefing"
+version = "0.1.0"
+description = "Headless daily news briefing from your own email newsletter subscriptions"
+requires-python = ">=3.12"
+dependencies = [
+    "litellm>=1.40",
+    "patchright>=1.40",
+    "pyyaml>=6.0",
+    "rookiepy>=0.5",
+]
+
+[dependency-groups]
+dev = ["pytest>=8.0"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

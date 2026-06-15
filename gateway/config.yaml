@@ -1,0 +1,11 @@
+default: claude
+aliases:
+  claude: anthropic/claude-opus-4-8        # Opus 4.8 — primary synthesiser
+  claude-fast: anthropic/claude-sonnet-4-6 # Sonnet 4.6 — cheaper fallback
+  opus: anthropic/claude-opus-4-8
+  gpt: openai/gpt-4o
+  gemini: gemini/gemini-2.0-pro
+  local: ollama/qwen2.5:14b
+fallback:
+  claude: claude-fast
+  gpt: claude

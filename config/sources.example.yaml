@@ -1,0 +1,107 @@
+# Source config for the daily-news pipeline.
+#
+# Copy this file to config/sources.yaml and edit it (config/sources.yaml is
+# gitignored — it never gets committed). Matching is case-insensitive substring
+# on the raw From header (domains/forwarders) or the Subject (subject_markers).
+#
+# Newsletters can reach your inbox two ways:
+#   1) DIRECT  — a publisher sends straight to the inbox you read over IMAP.
+#   2) FORWARDED — you auto-forward digests from another mailbox; the From is then
+#      the forwarder, so the real publication is read from the subject (e.g.
+#      "FW: In Today's FT: ...") via subject_markers below.
+
+# --- DIRECT publishers: From-substring -> source label ---
+# These are illustrative public brand examples — replace/extend with the
+# newsletters you actually subscribe to.
+domains:
+  "ft.com": "FT"
+  "theinformation.com": "The Information"
+  "gamesindustry.biz": "GamesIndustry.biz"
+  "bloomberg.com": "Bloomberg"
+
+# --- FORWARDERS: mailboxes YOU forward newsletters from. Mail from these is
+#     always included; the source label is inferred from the subject below.
+#     Replace these placeholders with your own forwarding mailbox addresses. ---
+forwarders:
+  - "you@example.com"        # e.g. a personal mailbox you forward digests from
+  # - "you-other@example.com"
+
+# --- SUBJECT markers: substring in the (forwarded) subject -> source label.
+#     First match wins, so order matters. Unmatched forwards get
+#     default_forward_label. ---
+subject_markers:
+  "in today's ft": "FT"
+  "firstft": "FT"
+  "morning headlines": "FT"
+  "the briefing": "The Information"
+  "the information": "The Information"
+  "gi daily": "GamesIndustry.biz"
+  "gamesindustry": "GamesIndustry.biz"
+  "bloomberg": "Bloomberg"
+default_forward_label: "Forwarded"
+
+# Standing topic lenses for the briefing. Tune these to your interests — the prompt
+# builds one section per topic that has coverage.
+topics:
+  - "Macro Economy"
+  - "Tech & AI"
+  - "Housing Market"
+  - "Gaming"
+
+# --- WEB FALLBACK (Tavily API; needs TAVILY_API_KEY — optional) ---
+# Best-effort enrichment when the inbox is thin on a topic. Housing data is often
+# the chronic gap (newsletters rarely forward index/mortgage data daily), so the
+# housing queries run by default. Smart-money queries surface institutional /
+# positioning signal. Results are passed to the LLM labelled [web fallback]; the
+# prompt is told to PREFER newsletters and only use these where the inbox lacks
+# coverage. If TAVILY_API_KEY is unset, the whole web fallback is skipped.
+web_fallback:
+  # Housing queries + domains below are UK-centric EXAMPLES — retune the queries
+  # and the include-domain list to whichever country's house-price indices and
+  # mortgage sources you track.
+  housing:
+    - "Nationwide house price index latest monthly"
+    - "Halifax house price index latest monthly"
+    - "Rightmove house price index asking prices latest"
+    - "RICS residential market survey latest"
+    - "Zoopla house price index regional latest"
+    - "average 2-year 5-year fixed mortgage rate Moneyfacts latest"
+    - "mortgage approvals central bank latest"
+  # Restrict housing search to authoritative sources (topic=general, no recency
+  # filter) so the monthly indices surface instead of stray recent news.
+  housing_domains:
+    - "nationwide.co.uk"
+    - "halifax.co.uk"
+    - "rics.org"
+    - "zoopla.co.uk"
+    - "rightmove.co.uk"
+    - "gov.uk"
+    - "bankofengland.co.uk"
+    - "moneyfacts.co.uk"
+  # Institutional "smart money" — track big players + famous investors via the
+  # public regulatory record (13F / insider / activist) + positioning surveys,
+  # restricted to authoritative aggregators (topic=general, no recency). These are
+  # generic public finance sources — keep or retune as you like.
+  smart_money:
+    - "Dataroma superinvestors latest buys activity"
+    - "latest 13F top hedge fund buys this quarter"
+    - "notable insider buying cluster OpenInsider"
+    - "CFTC Commitment of Traders positioning latest"
+    - "Berkshire Hathaway 13F latest portfolio changes"
+  smart_money_domains:
+    - "dataroma.com"
+    - "whalewisdom.com"
+    - "hedgefollow.com"
+    - "fintel.io"
+    - "openinsider.com"
+    - "sec.gov"
+    - "cftc.gov"
+  days: 3                # recency window (unused while smart-money is topic=general)
+  max_results: 4         # per query
+  # Named individual investors to track on X (headless via your browser cookies,
+  # best-effort). Their recent posts feed the Smart Money section, attributed and
+  # with healthy skepticism. Leave empty to disable. Format (one handle per line):
+  #   x_voices:
+  #     - "someinvestorhandle"
+  x_voices: []
+  x_posts_per_voice: 5
