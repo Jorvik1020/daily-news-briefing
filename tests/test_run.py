@@ -105,6 +105,36 @@ def test_no_push_flag_writes_but_skips_telegram(monkeypatch):
     assert rc == 0 and pushed["n"] == 0
 
 
+def test_telegram_push_false_in_config_skips_push(monkeypatch, capsys):
+    # config telegram.push: false must behave like --no-push: write the file,
+    # skip the push, print a short note.
+    monkeypatch.setattr(run.gather, "gather_all", lambda **k: CTX)
+    monkeypatch.setattr(run.gather, "load_sources", lambda: {"telegram": {"push": False}})
+    monkeypatch.setattr(run.gateway, "ask", lambda prompt, **k: "briefing")
+    wrote = {"n": 0}
+    monkeypatch.setattr(run.store, "write_note",
+                        lambda *a, **k: wrote.__setitem__("n", wrote["n"] + 1) or "/p")
+    pushed = {"n": 0}
+    monkeypatch.setattr(run, "_notify", lambda b: pushed.__setitem__("n", pushed["n"] + 1))
+    rc = run.run_job(dry_run=False)
+    assert rc == 0
+    assert wrote["n"] == 1          # file still written
+    assert pushed["n"] == 0         # push skipped
+    assert "telegram.push" in capsys.readouterr().out
+
+
+def test_telegram_push_default_true_when_absent(monkeypatch):
+    # No telegram section -> push stays enabled (back-compat).
+    monkeypatch.setattr(run.gather, "gather_all", lambda **k: CTX)
+    monkeypatch.setattr(run.gather, "load_sources", lambda: {})
+    monkeypatch.setattr(run.gateway, "ask", lambda prompt, **k: "briefing")
+    monkeypatch.setattr(run.store, "write_note", lambda *a, **k: "/p")
+    pushed = {"n": 0}
+    monkeypatch.setattr(run, "_notify", lambda b: pushed.__setitem__("n", pushed["n"] + 1))
+    rc = run.run_job(dry_run=False)
+    assert rc == 0 and pushed["n"] == 1
+
+
 def test_push_failure_still_succeeds(monkeypatch):
     monkeypatch.setattr(run.gather, "gather_all", lambda **k: CTX)
     monkeypatch.setattr(run.gateway, "ask", lambda prompt, **k: "briefing")

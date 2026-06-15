@@ -26,12 +26,32 @@ def test_gather_x_voices_disabled_when_no_handles():
 
 
 def test_gather_x_voices_formats_posts(monkeypatch):
-    wf = {"x_voices": ["exampleinvestor"], "x_posts_per_voice": 3}
+    # top-level x_voices (the user-facing location)
+    cfg = {"x_voices": ["exampleinvestor"], "x_posts_per_voice": 3}
     monkeypatch.setattr(gather.x_fetch, "fetch_posts",
                         lambda h, max_posts=5: [x_fetch.XPost(h, "ticker thesis here")])
-    out = gather.gather_x_voices(wf)
+    out = gather.gather_x_voices(cfg)
     assert "[X @exampleinvestor]" in out
     assert "ticker thesis here" in out
+
+
+def test_gather_x_voices_reads_top_level(monkeypatch):
+    captured = {}
+    def fake_fetch(h, max_posts=5):
+        captured["max_posts"] = max_posts
+        return [x_fetch.XPost(h, "thesis")]
+    monkeypatch.setattr(gather.x_fetch, "fetch_posts", fake_fetch)
+    out = gather.gather_x_voices({"x_voices": ["topvoice"], "x_posts_per_voice": 7})
+    assert "[X @topvoice]" in out
+    assert captured["max_posts"] == 7
+
+
+def test_gather_x_voices_legacy_web_fallback_location(monkeypatch):
+    # back-compat: x_voices nested under web_fallback still works
+    monkeypatch.setattr(gather.x_fetch, "fetch_posts",
+                        lambda h, max_posts=5: [x_fetch.XPost(h, "legacy thesis")])
+    out = gather.gather_x_voices({"web_fallback": {"x_voices": ["legacyvoice"]}})
+    assert "[X @legacyvoice]" in out
 
 
 def test_gather_x_voices_survives_fetch_exception(monkeypatch):

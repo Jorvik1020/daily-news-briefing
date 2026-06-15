@@ -1,5 +1,17 @@
 # Source config for the daily-news pipeline.
 #
+# ============================ USER SETTINGS ============================
+# Four knobs you configure — everything else has sane defaults:
+#
+#   1) NEWSLETTERS (email) ... `domains` + `forwarders` + `subject_markers`
+#   2) RSS FEEDS ............. `feeds`
+#   3) X ACCOUNTS ............ `x_voices`  (+ `x_posts_per_voice`)
+#   4) TELEGRAM PUSH ......... `telegram.push`  (token/chat id come from env)
+#
+# Secrets (Gmail app password, Telegram bot token/chat id, Tavily key) live in
+# the ENVIRONMENT, never in this file.
+# ======================================================================
+#
 # Copy this file to config/sources.yaml and edit it (config/sources.yaml is
 # gitignored — it never gets committed). Matching is case-insensitive substring
 # on the raw From header (domains/forwarders) or the Subject (subject_markers).
@@ -48,6 +60,24 @@ default_forward_label: "Forwarded"
 feeds:
   # "Example Source": "https://example.com/rss.xml"
   # "Hacker News Front Page": "https://hnrss.org/frontpage"
+
+# --- X ACCOUNTS ---
+# Specific X (Twitter) accounts to track. Their recent posts are fetched
+# best-effort (headless, via your browser cookies — no API key) and fed to the
+# briefing, attributed and read with healthy skepticism. Empty by default
+# (opt-in). Format — one handle per line, no leading "@":
+#   x_voices:
+#     - "someinvestorhandle"
+#     - "anotheranalyst"
+x_voices: []
+x_posts_per_voice: 5
+
+# --- TELEGRAM PUSH ---
+# Push the finished briefing to Telegram. Set push: false to only write the
+# file. Credentials come from env (TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID) — never
+# put tokens in this file. Push happens only when push: true AND both env vars are set.
+telegram:
+  push: true
 
 # Standing topic lenses for the briefing. Tune these to your interests — the prompt
 # builds one section per topic that has coverage.
@@ -107,10 +137,5 @@ web_fallback:
     - "cftc.gov"
   days: 3                # recency window (unused while smart-money is topic=general)
   max_results: 4         # per query
-  # Named individual investors to track on X (headless via your browser cookies,
-  # best-effort). Their recent posts feed the Smart Money section, attributed and
-  # with healthy skepticism. Leave empty to disable. Format (one handle per line):
-  #   x_voices:
-  #     - "someinvestorhandle"
-  x_voices: []
-  x_posts_per_voice: 5
+  # Note: tracked X accounts are configured at the TOP LEVEL (x_voices /
+  # x_posts_per_voice above), not here.

@@ -21,8 +21,12 @@ def test_example_sources_parses():
     wf = cfg["web_fallback"]
     assert wf["housing"] and wf["smart_money"]
     assert any("rightmove" in q.lower() for q in wf["housing"])
-    # x_voices ships empty (opt-in)
-    assert wf["x_voices"] == []
+    # x_voices is now a TOP-LEVEL setting and ships empty (opt-in)
+    assert cfg["x_voices"] == []
+    assert cfg["x_posts_per_voice"] == 5
+    assert "x_voices" not in wf            # moved out of web_fallback
+    # telegram push is a top-level user setting, default on
+    assert cfg["telegram"]["push"] is True
 
 
 def test_example_sources_uses_placeholder_forwarders():

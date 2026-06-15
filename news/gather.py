@@ -105,21 +105,31 @@ def gather_web_fallback(cfg: dict) -> tuple[str, list[str]]:
         seen.add(r.url)
         results.append(r)
     web_material = _format_web(results)
-
-    # Named individual investors on X (best-effort, headless via Chrome cookies).
-    x_block = gather_x_voices(wf)
-    material = "\n\n---\n\n".join(b for b in (web_material, x_block) if b)
+    material = web_material
     return material, housing_q + smart_q
 
 
-def gather_x_voices(wf: dict) -> str:
+def _x_settings(cfg: dict) -> tuple[list, int]:
+    """Resolve the tracked X accounts from the TOP level of the config, falling
+    back to the legacy web_fallback.x_voices location for backward compatibility."""
+    wf = cfg.get("web_fallback", {}) or {}
+    handles = cfg.get("x_voices")
+    if handles is None:
+        handles = wf.get("x_voices", [])
+    n = cfg.get("x_posts_per_voice")
+    if n is None:
+        n = wf.get("x_posts_per_voice", 5)
+    return handles or [], n
+
+
+def gather_x_voices(cfg: dict) -> str:
     """Fetch tracked X voices' recent posts, formatted for the prompt. Best-effort
     — returns '' if disabled or the headless fetch fails (Smart Money still works
-    off the institutional Tavily data)."""
-    handles = wf.get("x_voices", [])
+    off the institutional Tavily data). Accepts the full config dict; reads
+    top-level x_voices/x_posts_per_voice (legacy web_fallback location still works)."""
+    handles, n = _x_settings(cfg)
     if not handles:
         return ""
-    n = wf.get("x_posts_per_voice", 5)
     blocks = []
     for h in handles:
         try:
@@ -163,6 +173,10 @@ def gather_all(today: datetime.date | None = None, since_days: int = 1) -> dict:
         fetch_error = "GMAIL_USER / GMAIL_APP_PASSWORD not set in environment"
 
     web_material, web_queries = gather_web_fallback(cfg)
+    # Tracked X accounts feed the Smart Money / web-fallback material (top-level
+    # x_voices, with a legacy web_fallback fallback inside _x_settings).
+    x_block = gather_x_voices(cfg)
+    web_material = "\n\n---\n\n".join(b for b in (web_material, x_block) if b)
     feeds_material = gather_feeds(cfg)
 
     sources_present = sorted({it.source for it in items})

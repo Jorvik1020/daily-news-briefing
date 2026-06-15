@@ -60,8 +60,8 @@ is silently skipped.
 
 ### Optional X-voice tracking (advanced, best-effort)
 
-If you list handles under `web_fallback.x_voices`, the pipeline will try to read
-their recent posts using a stealth headless browser (patchright) driven with
+If you list handles under the top-level `x_voices` setting, the pipeline will try
+to read their recent posts using a stealth headless browser (patchright) driven with
 **your own logged-in browser cookies** (rookiepy reads them from Chrome). This is
 strictly best-effort and returns nothing on any failure. Caveats:
 
@@ -106,6 +106,13 @@ Edit `config/sources.yaml` (copied from `config/sources.example.yaml`). Sections
   match wins, so order matters.
 - **`default_forward_label`** — label for forwarded mail whose subject matches no
   marker.
+- **`feeds`** — `name: url` map of RSS/Atom feeds to pull recent items from
+  (best-effort, no API key). Empty by default.
+- **`x_voices`** / **`x_posts_per_voice`** — top-level setting: handles of specific
+  X accounts to track (empty = disabled), and how many recent posts per account.
+- **`telegram`** — `push: true|false`. When `false`, the briefing is written to file
+  but not pushed (the token/chat id still come from env, never this file). Defaults
+  to `true` when the section is absent.
 - **`topics`** — the standing topic lenses; the prompt builds one section per topic
   that has coverage.
 - **`web_fallback`** — optional Tavily enrichment:
@@ -114,8 +121,6 @@ Edit `config/sources.yaml` (copied from `config/sources.example.yaml`). Sections
     to your region.
   - `smart_money` / `smart_money_domains` — institutional-filing / positioning queries
     and their authoritative aggregator domains.
-  - `x_voices` / `x_posts_per_voice` — handles of individual investors to track on X
-    (empty = disabled).
   - `max_results` / `days` — per-query result cap and recency window.
 
 ## Running

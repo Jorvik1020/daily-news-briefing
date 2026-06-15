@@ -60,9 +60,27 @@ def _alert_failure(reason: str, gmail_errored: bool, has_web: bool) -> None:
         pass
 
 
+def _push_enabled(cfg: dict) -> bool:
+    """Whether config opts into the Telegram push. Defaults to True when the
+    `telegram` section or its `push` key is absent (preserves prior behaviour)."""
+    tg = cfg.get("telegram") if isinstance(cfg, dict) else None
+    if not isinstance(tg, dict) or "push" not in tg:
+        return True
+    return bool(tg["push"])
+
+
 def run_job(dry_run: bool = False, since_days: int = 1,
             no_push: bool = False, model: str | None = None) -> int:
     ctx = gather.gather_all(since_days=since_days)
+
+    # config.telegram.push: false behaves exactly like --no-push.
+    try:
+        cfg = gather.load_sources()
+    except Exception:
+        cfg = {}
+    push_off_by_config = not _push_enabled(cfg)
+    if push_off_by_config:
+        no_push = True
 
     no_news = ctx["item_count"] == 0
     gmail_errored = bool(ctx["fetch_error"])
@@ -93,7 +111,8 @@ def run_job(dry_run: bool = False, since_days: int = 1,
     print(f"Wrote {path}")
 
     if no_push:
-        print("Telegram push skipped (--no-push).")
+        why = "telegram.push: false in config" if push_off_by_config else "--no-push"
+        print(f"Telegram push skipped ({why}).")
         return 0
     try:
         _notify(briefing)
