@@ -24,6 +24,7 @@ def build_prompt(ctx: dict) -> str:
         date=ctx["date"],
         sources_line=sources_line,
         newsletters=ctx.get("newsletters") or "(no newsletters fetched today)",
+        feeds=ctx.get("feeds") or "(no feeds configured)",
         web_fallback=ctx.get("web_fallback") or "(no web fallback — TAVILY_API_KEY unset or no results)",
         last_briefing=ctx.get("last_briefing") or "(no prior briefing on file)",
     )

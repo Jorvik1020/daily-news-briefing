@@ -9,7 +9,7 @@ from pathlib import Path
 
 import yaml
 
-from lib import gmail, web, store, x_fetch
+from lib import gmail, web, store, x_fetch, rss
 
 SOURCES_PATH = Path(__file__).parent.parent / "config" / "sources.yaml"
 NEWS_DIR = store.OUTPUT_DIR
@@ -47,6 +47,34 @@ def _format_web(results: list[web.WebResult]) -> str:
     for r in results:
         blocks.append(f"### [web fallback] {r.title}\n{r.url}\n\n{r.content}")
     return "\n\n---\n\n".join(blocks)
+
+
+def _format_feeds(items: list[rss.FeedItem]) -> str:
+    if not items:
+        return ""
+    blocks = []
+    for it in items:
+        d = it.published.isoformat() if it.published else "?"
+        head = f"### [feed: {it.feed}] {it.title}  ({d})"
+        body = "\n".join(p for p in (it.link, it.summary) if p)
+        blocks.append(f"{head}\n{body}")
+    return "\n\n---\n\n".join(blocks)
+
+
+def gather_feeds(cfg: dict) -> str:
+    """Fetch the configured RSS/Atom feeds and format them for the prompt. Best-effort
+    — a missing/empty `feeds:` config (or any fetch error) yields ''. No crash."""
+    feeds = cfg.get("feeds") or {}
+    if not feeds:
+        return ""
+    fc = cfg.get("feeds_config", {}) or {}
+    max_items = fc.get("max_items", 8)
+    since_days = fc.get("since_days", 3)
+    try:
+        items = rss.fetch_feeds(feeds, max_items=max_items, since_days=since_days)
+    except Exception:
+        items = []
+    return _format_feeds(items)
 
 
 def gather_web_fallback(cfg: dict) -> tuple[str, list[str]]:
@@ -135,14 +163,18 @@ def gather_all(today: datetime.date | None = None, since_days: int = 1) -> dict:
         fetch_error = "GMAIL_USER / GMAIL_APP_PASSWORD not set in environment"
 
     web_material, web_queries = gather_web_fallback(cfg)
+    feeds_material = gather_feeds(cfg)
 
     sources_present = sorted({it.source for it in items})
+    if feeds_material:
+        sources_present.append("RSS feeds")
     if web_material:
         sources_present.append("Web fallback (Tavily)")
     return {
         "date": run_date.isoformat(),
         "topics": topics,
         "newsletters": _format_newsletters(items),
+        "feeds": feeds_material,
         "web_fallback": web_material,
         "web_queries": web_queries,
         "sources_present": sources_present,

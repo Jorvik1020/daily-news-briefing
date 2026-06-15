@@ -40,6 +40,15 @@ subject_markers:
   "bloomberg": "Bloomberg"
 default_forward_label: "Forwarded"
 
+# --- RSS/Atom FEEDS (name: url) — a third source type alongside newsletters and
+#     X voices. Each feed is fetched best-effort (stdlib parser, no API key) and
+#     recent items are passed to the LLM labelled [feed: <name>]. Add your own; the
+#     real values belong in the gitignored config/sources.yaml, not here. Empty by
+#     default — every entry is commented out so the example ships no real feeds. ---
+feeds:
+  # "Example Source": "https://example.com/rss.xml"
+  # "Hacker News Front Page": "https://hnrss.org/frontpage"
+
 # Standing topic lenses for the briefing. Tune these to your interests — the prompt
 # builds one section per topic that has coverage.
 topics:

@@ -3,10 +3,10 @@ optionally pushed to Telegram. Be precise, numerate, and signal-dense — this i
 curated high-signal feed, not a news dump.
 
 # Source material
-The PRIMARY source is the newsletters below (already fetched from the inbox this
-morning), plus an optional web fallback. Synthesise from these. Do NOT invent facts
-or numbers that are not in the source text. If a standing topic has no coverage in
-today's material, write a single bullet: "No notable items today."
+The PRIMARY sources are the newsletters and the RSS feeds below (both already
+fetched this morning), plus an optional web fallback. Synthesise from these. Do NOT
+invent facts or numbers that are not in the source text. If a standing topic has no
+coverage in today's material, write a single bullet: "No notable items today."
 
 # Output (return ONLY the briefing text, Telegram-friendly Markdown)
 Start with this exact header:
@@ -69,6 +69,13 @@ source material actually covers — do not force a section that has no data.)
 
 # Today's newsletters (the PRIMARY source material)
 {newsletters}
+
+# Today's RSS feeds (PRIMARY source material — recent articles pulled from configured
+# RSS/Atom feeds, each block labelled "[feed: <name>]"). Treat these like the
+# newsletters: synthesise from them, attribute to the feed where useful, and do NOT
+# invent facts or numbers beyond what the article text states. If empty, rely on the
+# newsletters.
+{feeds}
 
 # Web fallback (Tavily — authoritative housing indices + smart-money signal)
 # The housing items come from trusted sources — treat them as PRIMARY data for the
